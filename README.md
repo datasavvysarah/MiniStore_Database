@@ -7,7 +7,7 @@ This repository contains a comprehensive analysis of store records data, focusin
 ## Repository Structure
 
 ```
-store_records/
+MiniStore_Database/
 ├── README.md
 ├── data_cleaning.sql
 ├── analysis.sql (upcoming)
