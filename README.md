@@ -10,7 +10,7 @@ This repository contains a comprehensive analysis of store records data, focusin
 MiniStore_Database/
 ├── README.md
 ├── data_cleaning.sql
-├── analysis.sql (upcoming)
+├── analysis.sql
 ├── data/
 │   └── [raw data files]
 ├── results/
