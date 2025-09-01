@@ -145,6 +145,148 @@ ORDER BY rc."Store", month, DATE_PART('month', rc."Date"::date);
 -- What are the sales patterns and peak hours for each store location?
 -- Which stores show the most consistent performance over time?
 
+-- Which stores are the top performers in terms of total sales and revenue?
+SELECT "Store", sum("Price" * "Quantity") as Revenue, sum("Weekly_Sales") as Total_Sales
+FROM retail_custom rc 
+WHERE "Store" IN ('Store A','Store B', 'Store C', 'Store D')
+GROUP BY "Store"
+ORDER BY Total_Sales DESC;
+
+-- ANS: Store D and Store A are the top performers in terms of total sales and revenue
+
+-- How do different stores compare in terms of category mix and sales volume?
+SELECT
+    "Store",
+    "Category",
+    SUM("Quantity") AS total_sales_volume,
+    ROUND(SUM("Price" * "Quantity")::numeric, 2) AS total_sales,
+    ROUND(
+        ((SUM("Quantity") * 100.0) / SUM(SUM("Quantity")) OVER (PARTITION BY "Store"))::numeric,
+        2
+    ) AS store_sales_volume,
+    ROUND(
+        ((SUM("Price" * "Quantity") * 100.0) / SUM(SUM("Price" * "Quantity")) OVER (PARTITION BY "Store"))::numeric,
+        2
+    ) AS store_sales_value
+FROM retail_custom
+GROUP BY "Store", "Category"
+ORDER BY "Store", total_sales DESC;
+
+-- Store A relies heavily on Clothings (26.92% of sales value) with a total sales volume at 415 
+-- Store D sells fewer units on Clothings, but its Groceries category contributes 24.07% of its sales value, higher than the other stores.”
+-- OR 
+
+SELECT
+    COALESCE("Store", 'All Stores') AS store,
+    "Category",
+    SUM("Quantity") AS total_sales_volume,
+    ROUND(SUM("Price" * "Quantity")::numeric, 2) AS total_sales,
+    ROUND(
+        ((SUM("Quantity") * 100.0) / SUM(SUM("Quantity")) OVER (PARTITION BY "Store"))::numeric,
+        2
+    ) AS pct_of_store_sales_volume,
+    ROUND(
+        ((SUM("Price" * "Quantity") * 100.0) / SUM(SUM("Price" * "Quantity")) OVER (PARTITION BY "Store"))::numeric,
+        2
+    ) AS pct_of_store_sales_value
+FROM retail_custom
+GROUP BY GROUPING SETS (
+    ("Store", "Category"),  -- breakdown by store + category
+    ("Category")            -- grand totals across all stores
+)
+ORDER BY store, total_sales DESC;
+
+
+-- Due to the fact that there is no time stamps on this data we are focused on the days
+-- What are the sales patterns and peak days for each store location?
+WITH sales_by_day AS (
+    SELECT 
+        "City",
+        TO_CHAR("Date"::DATE, 'Day') AS day_name,
+        COUNT(*) AS sales_volume,
+        SUM("Weekly_Sales") AS total_sales
+    FROM retail_custom rc
+    GROUP BY "City", TO_CHAR("Date"::DATE, 'Day')
+)
+SELECT *
+FROM (
+    SELECT 
+        "City",
+        day_name,
+        sales_volume,
+        total_sales,
+        RANK() OVER (PARTITION BY "City" ORDER BY sales_volume DESC) AS sales_rank
+    FROM sales_by_day
+) ranked
+WHERE sales_rank = 1
+order by total_sales DESC;
+
+-- OR
+SELECT 
+    "City",
+    EXTRACT(DOW FROM "Date"::DATE) AS day_of_week, -- 0=Sunday, 1=Monday...
+    COUNT(*) AS sales_volume,
+    SUM("Weekly_Sales") AS total_sales
+FROM retail_custom rc
+GROUP BY "City", EXTRACT(DOW FROM "Date"::DATE)
+ORDER BY "City", day_of_week;
+
+
+-- Which stores show the most consistent performance over time?
+
+WITH monthly_sales AS (
+    SELECT 
+        "Store",
+        DATE_TRUNC('month', TO_DATE("Date", 'YYYY-MM-DD')) AS month_start,
+        SUM("Weekly_Sales") AS total_sales
+    FROM retail_custom
+    GROUP BY "Store", DATE_TRUNC('month', TO_DATE("Date", 'YYYY-MM-DD'))
+),
+consistency AS (
+    SELECT 
+        "Store",
+        AVG(total_sales) AS avg_sales,
+        STDDEV(total_sales) AS sales_volatility,
+        (STDDEV(total_sales) / NULLIF(AVG(total_sales), 0)) * 100 AS coeff_variation
+    FROM monthly_sales
+    GROUP BY "Store"
+)
+SELECT 
+    "Store",
+    avg_sales,
+    sales_volatility,
+    TO_CHAR(ROUND(coeff_variation::numeric, 2), 'FM999990.00') || '%' AS coeff_variation_pct
+FROM consistency
+ORDER BY coeff_variation ASC;  -- lower % = more consistent
+
+-- OR WITH Rank Function
+-- Which stores show the most consistent performance over time?
+WITH monthly_sales AS (
+    SELECT 
+        "Store",
+        DATE_TRUNC('month', TO_DATE("Date", 'YYYY-MM-DD')) AS month_start,
+        SUM("Weekly_Sales") AS total_sales
+    FROM retail_custom
+    GROUP BY "Store", DATE_TRUNC('month', TO_DATE("Date", 'YYYY-MM-DD'))
+),
+consistency AS (
+    SELECT 
+        "Store",
+        AVG(total_sales) AS avg_sales,
+        STDDEV(total_sales) AS sales_volatility,
+        (STDDEV(total_sales) / NULLIF(AVG(total_sales), 0)) * 100 AS coeff_variation
+    FROM monthly_sales
+    GROUP BY "Store"
+)
+SELECT 
+    "Store",
+    avg_sales,
+    sales_volatility,
+    ROUND(coeff_variation::numeric, 2)::text || '%' AS coeff_variation_pct,
+    RANK() OVER (ORDER BY coeff_variation ASC) AS consistency_rank
+FROM consistency
+ORDER BY coeff_variation ASC
+LIMIT 5;   -- Top 5 most consistent
 
 
 
