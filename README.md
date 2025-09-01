@@ -8,15 +8,15 @@ This repository contains a comprehensive analysis of store records data, focusin
 
 ```
 MiniStore_Database/
+├── data/
+│   └── [raw data files]
+└── documentation/
+    └── [additional analysis documentation]
+├── results/
+│   └── [analysis outputs and visualizations]
 ├── README.md
 ├── data_cleaning.sql
 ├── analysis.sql
-├── data/
-│   └── [raw data files]
-├── results/
-│   └── [analysis outputs and visualizations]
-└── documentation/
-    └── [additional analysis documentation]
 ```
 
 ## Technologies Used
@@ -156,7 +156,7 @@ This is an individual analysis project. For questions or suggestions regarding t
 
 **Project Start Date**: [2025-08-28]
 
-**Last Updated**: [2025-09-01 2:03PM]
+**Last Updated**: [2025-09-01 2:55PM]
 
 ---
 
