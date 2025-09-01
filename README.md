@@ -138,8 +138,8 @@ The analysis will employ various SQL techniques including:
 
 - [x] Data Collection and Import
 - [x] Data Cleaning and Preprocessing
-- [ ] Exploratory Data Analysis
-- [ ] Advanced SQL Analysis
+- [x] Exploratory Data Analysis
+- [x] Advanced SQL Analysis
 - [ ] Results Interpretation
 - [ ] Report Generation
 - [ ] Recommendations Development
@@ -156,7 +156,7 @@ This is an individual analysis project. For questions or suggestions regarding t
 
 **Project Start Date**: [2025-08-28]
 
-**Last Updated**: [2025-08-30 12:34AM]
+**Last Updated**: [2025-09-01 2:03PM]
 
 ---
 
